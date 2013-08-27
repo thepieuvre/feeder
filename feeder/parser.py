@@ -2,12 +2,15 @@ import feedparser
 import json
 import sys
 import traceback
+import time
 
 AGENT='The Pieuvre/1.0 +http://www.thepieuvre.com/'
 REFERRER='http://www.thepieuvre.com/'
 
+DATE_FORMAT="%Y-%m-%d %H:%M:%S"
+
 def escaping(str):
-	return str.replace('\\','\\\\').replace('"','\\"').replace('\n',' ')
+	return str.replace('\\','\\\\').replace('"','\\"')
 
 def processing_task(task):
 	feed = json.loads(task)
@@ -40,6 +43,14 @@ def process_url(link, etag, modified, id=None):
 	data = feedparser.parse(link, etag=etag, modified=modified, agent=AGENT, referrer=REFERRER)
 	return process_data(data, id)
 
+def as_date(feed_key, parsed_feed):
+   '''helper method: retrieve a date field from a parsed feed'''
+   date = parsed_feed.get(feed_key + '_parsed')
+   if (date == None):
+      return 'null'   
+   else:
+      return time.strftime(DATE_FORMAT, date).encode('utf-8')
+
 def process_data(data, id):	
 	str_list = []	
 	str_list.append('{')
@@ -51,11 +62,11 @@ def process_data(data, id):
 	str_list.append(('"status": "%s",'% (data.get('status', '-1'))).encode('utf-8'))
 	str_list.append(('"standard": "%s",'% escaping((data.get('version','null'))).encode('utf-8')))
 	str_list.append(('"etag": "%s",'% escaping((data.get('etag', 'null')).replace('"','')).encode('utf-8')))
-	str_list.append(('"modified": "%s",'% escaping((data.get('modified', 'null'))).encode('utf-8')))
+	str_list.append(('"modified": "%s",' % as_date('modified', data))) 
 	status = data.get('status', -1)
 	if status == 301:
 		str_list.append(('"moved": "%s",' % escaping((data.href)).encode('utf-8')))
-	str_list.append(('"updated": "%s",'% escaping(data.feed.get('updated', 'null')).encode('utf-8')))
+	str_list.append(('"updated": "%s",'% as_date('modified', data)))
 	str_list.append('"articles": ['.encode('utf-8'))
 	size = len(data.entries)
 	counter = 0
@@ -76,7 +87,7 @@ def process_data(data, id):
 		elif article.get('summary_detail'):
 			str_list.append('"%s"' %escaping(article.summary_detail.get('value', 'null').encode('utf-8')))
 		str_list.append('],')
-		str_list.append(('"published": "%s",' % escaping((article.get('modified', 'null'))).encode('utf-8')))
+		str_list.append(('"published": "%s",' % as_date('modified', article)))
 		str_list.append(('"id": "%s" }' % escaping((article.get('id', 'null'))).encode('utf-8')))
 		if counter != size:
 			str_list.append(",")

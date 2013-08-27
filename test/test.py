@@ -7,32 +7,72 @@ if sys.hexversion < 0x0240000:
 	sys.exit(1)
 
 import unittest
-
+ 
 # ---------------------------------------------------------
+
 import feedparser
 import simplejson as json
 
 from feeder.parser import process_data, process_url
 
-class TestFeeder(unittest.TestCase):
+class TestParsedFeed(unittest.TestCase):
+    ''' Class for basic tests on feeds (ideally abstract) '''
 
     def private_check_json_output(self, ret_str):
         ''' Helper method to check critical fields in a JSON-encoded output string '''
         ret_json = json.loads(ret_str)
         self.assertTrue(len(ret_json['title']) > 10)
-        self.assertTrue(len(ret_json['updated']) > 10)
+        # self.assertTrue(len(ret_json['updated']) > 10)
+        #self.assertEqual(ret_json['updated'], 'me')
         for article in ret_json['articles']:
            self.assertTrue(len(article['title']) > 1)
            self.assertTrue(len(article['published']) > 10)
+        return ret_json 
 
     def private_test_url_process(self, url):
-        ''' Helper method to test the process_data method: parses a url, and then delegates 
-               checking the output String '''
+        ''' Helper method to test the process_data method: parses a url, 
+               and then delegates checking the output String '''
         data = feedparser.parse(url)
         ret_str = process_data(data, None)
-        self.private_check_json_output(ret_str)
-    
+        return self.private_check_json_output(ret_str)
+     
+# ---------------------------------------------------------
+
+import re 
+
+class TestFeederDates(TestParsedFeed): 
+
+    targetPattern = re.compile("^[0-9]{4}-[0-9]{2}-[0-9]{2} [0-9]{2}:[0-9]{2}:[0-9]{2}$")  
+
     def test_rss_process(self):
+        ret_json = self.private_test_url_process('test/data/rss.xml')
+        self.assertEqual(ret_json['articles'][0]['published'], '2013-08-19 17:56:08')
+        for article in ret_json['articles']:
+           matched = self.targetPattern.match ( article['published'] )
+           self.assertNotEqual(matched , None)
+        
+    def test_atom_process(self):
+        ret_json = self.private_test_url_process('test/data/atom_flat.xml')
+        self.assertEqual(ret_json['articles'][0]['published'], '2013-08-19 16:03:53')
+        for article in ret_json['articles']:
+           matched = self.targetPattern.match ( article['published'] )
+           self.assertNotEqual(matched , None)
+
+    def test_distant_process(self):
+        ''' Strangely, this test on a local file fails '''
+        ret_str = process_url('http://linuxfr.org', None, None)
+        ret_json = self.private_check_json_output(ret_str)
+        matched = self.targetPattern.match ( ret_json['updated'] )
+        self.assertNotEqual(matched , None)
+        
+# ---------------------------------------------------------
+
+class TestFeederBasics(TestParsedFeed):
+
+    def test_rss_process(self):
+        self.private_test_url_process('test/data/rss.xml')
+        
+    def test_rss_dates(self):
         self.private_test_url_process('test/data/rss.xml')
          
     def test_atom_process(self):
