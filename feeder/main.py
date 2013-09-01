@@ -11,6 +11,7 @@ if sys.hexversion < 0x0240000:
 
 from feeder.parser import get
 from feeder.version import VERSION
+from urlparse import urlparse
 
 def parse_cmdline():
 	usage = '%s [OPTIONS] RSS Feeds...' % (sys.argv[0])
@@ -20,12 +21,21 @@ def parse_cmdline():
 	parser.add_option('--id', type='int', dest='id', help='id of the feed')
 	parser.add_option('--etag', type='string', dest='etag', help='eTag for cache optimisation')
 	parser.add_option('--modified', type='string', dest='modified', help='modified for cache optimisation')
-	parser.add_option('--redis-mode', action='store_true', dest='redis_mode',
+	parser.add_option('--redis-url', type='string', dest='redis_url',
 		help='consuming the feeder queue from the local Redis')
 
 	options, args = parser.parse_args()
 
-	if len(args) != 1 and not options.redis_mode:
+	if options.redis_url:
+		if len(args) > 0: 
+			parser.error('No RSS feeds needed when REDIS in use')
+	
+		redis_host_port = urlparse(options.redis_url).netloc.split(':')
+		if (len (redis_host_port) != 2):
+			parser.error('Expecting a url for redis, like redis://host.domain.fr:456/')
+		options.redis_url = redis_host_port
+
+	elif len(args) == 0:
 		parser.error('No RSS feeds given')
 
 	return options, args
@@ -34,8 +44,8 @@ def main():
 	"""Starting the Pieuvre feeder"""
 	locale.setlocale(locale.LC_ALL, '')
 	options, args = parse_cmdline()
-	if options.redis_mode:
-		r = redis.StrictRedis(host='localhost', port=6379, db=0)
+	if options.redis_url:
+		r = redis.StrictRedis(host=redis_url[0], port=int(redis_url[1]), db=0)
 		r.sadd('queues', 'feedparser')
 		get(None, options.id, options.etag, options.modified, redis=r)
 	else:
