@@ -85,6 +85,14 @@ class TestFeederBasics(TestParsedFeed):
         ret_str = process_url('http://www.lemonde.fr', None, None)
         self.private_check_json_output(ret_str)
 
+    def test_http_404(self):
+        ret_str = process_url('http://www.lemonde.fr/not-a-url/none', None, None)
+        ret_json = json.loads(ret_str)
+        self.assertEqual(ret_json['status'], '404')
+        self.assertEqual(ret_json['error'], 'Not Found')
+        matched = TestFeederDates.targetPattern.match ( ret_json['updated'] )
+        self.assertNotEqual(matched , None)
+      
 # ---------------------------------------------------------
 
 from feeder.HttpHelpers import is_html, get_feed_url
