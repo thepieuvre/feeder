@@ -45,7 +45,7 @@ def main():
 	locale.setlocale(locale.LC_ALL, '')
 	options, args = parse_cmdline()
 	if options.redis_url:
-		r = redis.StrictRedis(host=redis_url[0], port=int(redis_url[1]), db=0)
+		r = redis.StrictRedis(host=options.redis_url[0], port=int(options.redis_url[1]), db=0)
 		r.sadd('queues', 'feedparser')
 		get(None, options.id, options.etag, options.modified, redis=r)
 	else:
