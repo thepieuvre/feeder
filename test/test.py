@@ -92,6 +92,13 @@ class TestFeederBasics(TestParsedFeed):
         self.assertEqual(ret_json['error'], 'Not Found')
         matched = TestFeederDates.targetPattern.match ( ret_json['updated'] )
         self.assertNotEqual(matched , None)
+
+    def test_http_connection_refused(self):
+        ret_str = process_url('http://localhost:99999', None, None)
+        ret_json = json.loads(ret_str)
+        self.assertEqual(ret_json['error'], 'Connection refused')
+        matched = TestFeederDates.targetPattern.match ( ret_json['updated'] )
+        self.assertNotEqual(matched , None)
       
 # ---------------------------------------------------------
 

@@ -36,7 +36,7 @@ def get(url, id, etag, modified, redis=None):
 		print process_url(url, etag, modified)
 
 from HttpHelpers import is_html, get_feed_url
-from urllib2 import HTTPError
+from urllib2 import HTTPError, URLError, socket
 
 def error_json(error='null', status='null') :
    ''' Creates a JSON for error treatment '''
@@ -60,8 +60,14 @@ def process_url(link, etag, modified, id=None):
          link = get_feed_url (link)
       data = feedparser.parse(link, etag=etag, modified=modified, agent=AGENT, referrer=REFERRER)
       return process_data(data, id)
-   except HTTPError, err:
+   except HTTPError as err:
       return error_json(err.reason, err.code)
+   except URLError as err:
+      if isinstance(err.reason, socket.error):
+         msg = err.reason[1]
+      else:
+         msg = err.reason
+      return error_json(msg)
 
 def as_date(feed_key, parsed_feed):
    '''helper method: retrieve a date field from a parsed feed'''
