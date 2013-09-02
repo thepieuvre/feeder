@@ -1,0 +1,4 @@
+echo "run as 'python -m timeit ...'"
+
+while read i ; do echo -n " \"$i" ; done < $1 ; echo
+
