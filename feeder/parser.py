@@ -116,7 +116,7 @@ def process_data(data, id):
 		elif article.get('summary_detail'):
 			str_list.append('"%s"' %escaping(article.summary_detail.get('value', 'null').encode('utf-8')))
 		str_list.append('],')
-		str_list.append(('"published": "%s",' % as_date('modified', article)))
+		str_list.append(('"published": "%s",' % as_date('published', article)))
 		str_list.append(('"id": "%s" }' % escaping((article.get('id', 'null'))).encode('utf-8')))
 		if counter != size:
 			str_list.append(",")
