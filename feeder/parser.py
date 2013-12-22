@@ -61,7 +61,10 @@ def process_url(link, etag, modified, id=None):
       data = feedparser.parse(link, etag=etag, modified=modified, agent=AGENT, referrer=REFERRER)
       return process_data(data, id)
    except HTTPError as err:
-      return error_json(err.reason, err.code)
+      if hasattr(err, 'reason'):
+         return error_json(err.reason, err.code)
+      else:
+      	 return error_json('no reason', err.code)
    except URLError as err:
       if isinstance(err.reason, socket.error):
          msg = err.reason[1]
