@@ -7,7 +7,7 @@ import time
 AGENT='The Pieuvre/1.0 +http://www.thepieuvre.com/'
 REFERRER='http://www.thepieuvre.com/'
 
-DATE_FORMAT="%Y-%m-%d %H:%M:%S"
+DATE_FORMAT="%Y-%m-%d %H:%M:%S %Z"
 
 def escaping(str):
 	return str.replace('\\','\\\\').replace('"','\\"')
