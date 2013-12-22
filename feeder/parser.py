@@ -1,5 +1,6 @@
 import feedparser
 import json
+import logging
 import sys
 import traceback
 import time
@@ -8,6 +9,8 @@ AGENT='The Pieuvre/1.0 +http://www.thepieuvre.com/'
 REFERRER='http://www.thepieuvre.com/'
 
 DATE_FORMAT="%Y-%m-%d %H:%M:%S %Z"
+
+log = logging.getLogger(__name__)
 
 def escaping(str):
 	return str.replace('\\','\\\\').replace('"','\\"')
@@ -21,9 +24,9 @@ def redis_mode(redis):
 		try:
 			task = redis.blpop('queue:feeder', 10)
 			if task != None:
-				print 'Getting: %s'%(task[1])
+				log.info('Getting: %s'%(task[1]))
 				redis.rpush('queue:feedparser',processing_task(task[1]))
-				print 'Pushed to queue:feedparser'
+				log.info('Pushed to queue:feedparser')
 		except KeyboardInterrupt:
 			sys.exit(0)
 		except:

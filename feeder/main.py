@@ -1,4 +1,6 @@
 import locale
+import logging
+import logging.config
 import optparse
 import redis
 import sys
@@ -27,6 +29,8 @@ def parse_cmdline():
 		help='consuming the feeder queue from the local Redis (host)')
 	parser.add_option('--redis-port', type='int', dest='redis_port',
 		help='consuming the feeder queue from the local Redis (port)')
+	parser.add_option('--logging-config', type='string', dest='logging_config',
+		help='Logging configuration path')
 
 	options, args = parser.parse_args()
 
@@ -65,6 +69,10 @@ def main():
 	"""Starting the Pieuvre feeder"""
 	locale.setlocale(locale.LC_ALL, '')
 	options, args = parse_cmdline()
+	if options.logging_config:
+		logging.config.fileConfig(options.logging_config, disable_existing_loggers=False)
+	else:
+		logging.basicConfig(level=logging.INFO)
 	if options.redis_host:
 		r = redis.StrictRedis(host=options.redis_host, port=options.redis_port, db=0)
 		r.sadd('queues', 'feedparser')
