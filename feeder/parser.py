@@ -59,8 +59,8 @@ def error_json(error='null', status='null') :
 
 def process_url(link, etag, modified, id=None):
    try: 
-      if is_html(link):
-         link = get_feed_url (link)
+      #if is_html(link):
+      #   link = get_feed_url (link)
       data = feedparser.parse(link, etag=etag, modified=modified, agent=AGENT, referrer=REFERRER)
       return process_data(data, id)
    except HTTPError as err:
