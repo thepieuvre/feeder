@@ -1,6 +1,9 @@
+import logging
 import urllib2
 import lxml.html as LH
 from urlparse import urljoin
+
+log = logging.getLogger(__name__)
 
 def get_feed_url(html_url):
    '''From an HTML page, extract the first ATOM/RSS feed'''
@@ -22,7 +25,7 @@ def get_feed_url(html_url):
       response = urllib2.urlopen(req)
       new_content = response.read()
       # to visualize the number of times a download occurs: 
-      # print 'read :' + str(len(new_content))
+      log.debug('read :' + str(len(new_content)))
       if (not new_content):
           # end of http stream reached
           break
@@ -36,7 +39,7 @@ def get_feed_url(html_url):
    # just return the first <head><link rel='alternate' ... /> of RSS/ATOM type
    for element in link_xpath:  
       if element.get('type') in feedTypes:
-          # print 'href=' + element.get('href') + ' rel=' + element.get('rel') + ' type=' + element.get('type')
+          log.debug('href=' + element.get('href') + ' rel=' + element.get('rel') + ' type=' + element.get('type'))
           return urljoin(response.geturl(), element.get('href'))
                 
 class HeadRequest(urllib2.Request):

@@ -1,29 +1,33 @@
 import feedparser
 import json
+import logging
 import sys
 import traceback
 import time
 
-AGENT='The Pieuvre/1.0 +http://www.thepieuvre.com/'
-REFERRER='http://www.thepieuvre.com/'
+AGENT='Feeder-ThePieuvre; (+http://www.thepieuvre.com; %s subscribers; feed-id=%s)'
 
-DATE_FORMAT="%Y-%m-%d %H:%M:%S"
+REFERRER='http://www.thepieuvre.com'
+
+DATE_FORMAT="%Y-%m-%d %H:%M:%S %Z"
+
+log = logging.getLogger(__name__)
 
 def escaping(str):
 	return str.replace('\\','\\\\').replace('"','\\"')
 
 def processing_task(task):
 	feed = json.loads(task)
-	return process_url(feed['link'], feed['eTag'], feed['modified'], feed['id'])
+	return process_url(feed['link'], feed['eTag'], feed['modified'], feed['id'], feed['subscribers'])
 
 def redis_mode(redis):
 	while True:
 		try:
 			task = redis.blpop('queue:feeder', 10)
 			if task != None:
-				print 'Getting: %s'%(task[1])
+				log.info('Getting: %s'%(task[1]))
 				redis.rpush('queue:feedparser',processing_task(task[1]))
-				print 'Pushed to queue:feedparser'
+				log.info('Pushed to queue:feedparser')
 		except KeyboardInterrupt:
 			sys.exit(0)
 		except:
@@ -54,14 +58,17 @@ def error_json(error='null', status='null') :
 }''' % (current_date, status, current_date, error)
    return json
 
-def process_url(link, etag, modified, id=None):
+def process_url(link, etag, modified, id=None, subscribers=0):
    try: 
-      if is_html(link):
-         link = get_feed_url (link)
-      data = feedparser.parse(link, etag=etag, modified=modified, agent=AGENT, referrer=REFERRER)
+      #if is_html(link):
+      #   link = get_feed_url (link)
+      data = feedparser.parse(link, etag=etag, modified=modified, agent=AGENT%(subscribers, id), referrer=REFERRER)
       return process_data(data, id)
    except HTTPError as err:
-      return error_json(err.reason, err.code)
+      if hasattr(err, 'reason'):
+         return error_json(err.reason, err.code)
+      else:
+      	 return error_json('no reason', err.code)
    except URLError as err:
       if isinstance(err.reason, socket.error):
          msg = err.reason[1]
@@ -77,12 +84,13 @@ def as_date(feed_key, parsed_feed):
    else:
       return time.strftime(DATE_FORMAT, date).encode('utf-8')
 
-def process_data(data, id):	
+def process_data(data, id):
 	str_list = []	
 	str_list.append('{')
 	if id != None:
 		str_list.append(('"id": "%s",'% id))
 	str_list.append(('"title": "%s",'% escaping((data.feed.get('title', 'null'))).encode('utf-8')))
+	str_list.append(('"uuid": "%s",'% escaping((data.feed.get('id', 'null'))).encode('utf-8')))
 	str_list.append(('"description": "%s",'% escaping((data.feed.get('description', 'null'))).encode('utf-8')))
 	str_list.append(('"language": "%s",'% escaping((data.feed.get('language', 'en'))).encode('utf-8')))
 	str_list.append(('"status": "%s",'% (data.get('status', '-1'))).encode('utf-8'))
@@ -113,7 +121,7 @@ def process_data(data, id):
 		elif article.get('summary_detail'):
 			str_list.append('"%s"' %escaping(article.summary_detail.get('value', 'null').encode('utf-8')))
 		str_list.append('],')
-		str_list.append(('"published": "%s",' % as_date('modified', article)))
+		str_list.append(('"published": "%s",' % as_date('published', article)))
 		str_list.append(('"id": "%s" }' % escaping((article.get('id', 'null'))).encode('utf-8')))
 		if counter != size:
 			str_list.append(",")
