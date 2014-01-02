@@ -62,7 +62,7 @@ def process_url(link, etag, modified, id=None, subscribers=0):
    try: 
       #if is_html(link):
       #   link = get_feed_url (link)
-      data = feedparser.parse(link, etag=etag, modified=modified, agent=AGENT%(subscribers, ''), referrer=REFERRER)
+      data = feedparser.parse(link, etag=etag, modified=modified, agent=AGENT%(subscribers, id), referrer=REFERRER)
       return process_data(data, id)
    except HTTPError as err:
       if hasattr(err, 'reason'):
@@ -84,12 +84,13 @@ def as_date(feed_key, parsed_feed):
    else:
       return time.strftime(DATE_FORMAT, date).encode('utf-8')
 
-def process_data(data, id):	
+def process_data(data, id):
 	str_list = []	
 	str_list.append('{')
 	if id != None:
 		str_list.append(('"id": "%s",'% id))
 	str_list.append(('"title": "%s",'% escaping((data.feed.get('title', 'null'))).encode('utf-8')))
+	str_list.append(('"uuid": "%s",'% escaping((data.feed.get('id', 'null'))).encode('utf-8')))
 	str_list.append(('"description": "%s",'% escaping((data.feed.get('description', 'null'))).encode('utf-8')))
 	str_list.append(('"language": "%s",'% escaping((data.feed.get('language', 'en'))).encode('utf-8')))
 	str_list.append(('"status": "%s",'% (data.get('status', '-1'))).encode('utf-8'))
