@@ -5,8 +5,9 @@ import sys
 import traceback
 import time
 
-AGENT='The Pieuvre/1.0 +http://www.thepieuvre.com/'
-REFERRER='http://www.thepieuvre.com/'
+AGENT='Feeder-ThePieuvre; (+http://www.thepieuvre.com; %s subscribers; feed-id=%s)'
+
+REFERRER='http://www.thepieuvre.com'
 
 DATE_FORMAT="%Y-%m-%d %H:%M:%S %Z"
 
@@ -17,7 +18,7 @@ def escaping(str):
 
 def processing_task(task):
 	feed = json.loads(task)
-	return process_url(feed['link'], feed['eTag'], feed['modified'], feed['id'])
+	return process_url(feed['link'], feed['eTag'], feed['modified'], feed['id'], feed['subscribers'])
 
 def redis_mode(redis):
 	while True:
@@ -57,11 +58,11 @@ def error_json(error='null', status='null') :
 }''' % (current_date, status, current_date, error)
    return json
 
-def process_url(link, etag, modified, id=None):
+def process_url(link, etag, modified, id=None, subscribers=0):
    try: 
       #if is_html(link):
       #   link = get_feed_url (link)
-      data = feedparser.parse(link, etag=etag, modified=modified, agent=AGENT, referrer=REFERRER)
+      data = feedparser.parse(link, etag=etag, modified=modified, agent=AGENT%(subscribers, ''), referrer=REFERRER)
       return process_data(data, id)
    except HTTPError as err:
       if hasattr(err, 'reason'):
