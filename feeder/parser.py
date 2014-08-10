@@ -1,7 +1,6 @@
 import feedparser
 import json
 import logging
-import socket
 import sys
 import traceback
 import time
@@ -13,8 +12,6 @@ REFERRER='http://www.thepieuvre.com'
 DATE_FORMAT="%Y-%m-%d %H:%M:%S %Z"
 
 log = logging.getLogger(__name__)
-
-socket.setdefaulttimeout(30) # 30 seconds
 
 def escaping(str):
 	return str.replace('\\','\\\\').replace('"','\\"')

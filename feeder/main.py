@@ -3,6 +3,7 @@ import logging
 import logging.config
 import optparse
 import redis
+import socket
 import sys
 
 if sys.hexversion < 0x0240000:
@@ -68,6 +69,7 @@ def parse_cmdline():
 def main():
 	"""Starting the Pieuvre feeder"""
 	locale.setlocale(locale.LC_ALL, '')
+	socket.setdefaulttimeout(30) # 30 seconds
 	options, args = parse_cmdline()
 	if options.logging_config:
 		logging.config.fileConfig(options.logging_config, disable_existing_loggers=False)
