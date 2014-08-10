@@ -1,6 +1,7 @@
 import feedparser
 import json
 import logging
+import socket
 import sys
 import traceback
 import time
@@ -12,6 +13,8 @@ REFERRER='http://www.thepieuvre.com'
 DATE_FORMAT="%Y-%m-%d %H:%M:%S %Z"
 
 log = logging.getLogger(__name__)
+
+socket.setdefaulttimeout(30) # 30 seconds
 
 def escaping(str):
 	return str.replace('\\','\\\\').replace('"','\\"')
@@ -62,7 +65,9 @@ def process_url(link, etag, modified, id=None, subscribers=0):
    try: 
       #if is_html(link):
       #   link = get_feed_url (link)
+      log.debug('Processing URL - %s'%(link))
       data = feedparser.parse(link, etag=etag, modified=modified, agent=AGENT%(subscribers, id), referrer=REFERRER)
+      log.debug('Processed - %s'%(data.feed.get('title', 'null')))
       return process_data(data, id)
    except HTTPError as err:
       if hasattr(err, 'reason'):
