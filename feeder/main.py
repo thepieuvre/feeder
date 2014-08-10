@@ -72,7 +72,7 @@ def main():
 	if options.logging_config:
 		logging.config.fileConfig(options.logging_config, disable_existing_loggers=False)
 	else:
-		logging.basicConfig(level=logging.INFO)
+		logging.basicConfig(level=logging.DEBUG)
 	if options.redis_host:
 		r = redis.StrictRedis(host=options.redis_host, port=options.redis_port, db=0)
 		r.sadd('queues', 'feedparser')
